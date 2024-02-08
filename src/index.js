@@ -24,6 +24,7 @@ import "./styles/dayview.css";
 import "./styles/listview.css";
 import "./styles/sidebar.css";
 import "./styles/sbdatepicker.css";
+import "./styles/overlay_connecting.css"
 // </main>
 
 // <aside>

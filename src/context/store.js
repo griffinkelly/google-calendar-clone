@@ -3,7 +3,11 @@ import localStoreKeyNames from "./constants";
 import { testDate, compareDates } from "../utilities/dateutils";
 import locales from "../locales/en";
 import defautlKeyboardShortcuts from "../locales/kbDefault";
+import context, {datepickerContext} from "./appContext";
+import renderViews from "../config/renderViews";
+
 const colors = locales.colors;
+
 /*
   this is a temporary list of store methods for development purposes, it is not a complete list of methods
 
@@ -130,6 +134,8 @@ const colors = locales.colors;
 // Store is passed to all calendar views in the following order :
 // ./index > ./renderViews > ./setViews > component
 
+const api_url = "http://localhost:8000/api";
+
 class Store {
   constructor () {
     this.store = localStorage.getItem("store")
@@ -141,7 +147,9 @@ class Store {
     this.ctg = localStorage.getItem("ctg")
       ? JSON.parse(localStorage.getItem("ctg"))
       : {
-        default: { color: colors.blue[4], active: true },
+        'Flying Schedule': { color: colors.green[4], active: true },
+        'Personal Conflict': { color: colors.red[4], active: true },
+        'Personal Availability': { color: colors.blue[4], active: true },
       };
 
     this.activeOverlay = new Set();
@@ -186,6 +194,118 @@ class Store {
     this.keyboardShortcuts = defautlKeyboardShortcuts;
     this.keyboardShortcutsStatus = true;
     this.animationStatus = true;
+    this.setup();
+  }
+
+  async setup() {
+
+    let requestOptions = {
+      method: 'GET',
+      redirect: 'follow',
+      //headers: {authorization: `Bearer ${user.token}`},
+    };
+    let build = [];
+
+    fetch(api_url + "/holiday/", requestOptions)
+        .then(response => response.text())
+        .then(result => {
+          let json = JSON.parse(result);
+          console.log(json);
+          json.forEach(e => {
+            build.push({
+              "id": 'HO'+(e.id).toString(),
+              "category": "default",
+              "completed": false,
+              "description": e.person,
+              "category": "Personal Conflict",
+              // "location": e.location || "N/A",
+              "start":  new Date(e.start_datetime),
+              "end":  new Date(e.end_datetime),
+              "title": "Holiday Request",
+            })
+          });
+          this.store = build;
+          Store.setStore(this.store);
+          console.log("Build is equal to ", build);
+          renderViews(context, datepickerContext, this);
+
+          this.store = build;
+          Store.setStore(this.store);
+
+          var overlay = document.getElementById('overlay');
+          overlay.style.display = 'none';
+
+        })
+        .catch(error => console.log('error', error));
+
+
+    fetch(api_url + "/available/", requestOptions)
+        .then(response => response.text())
+        .then(result => {
+          let json = JSON.parse(result);
+          console.log(json);
+          json.forEach(e => {
+            build.push({
+              "id": 'PA'+(e.id).toString(),
+              "category": "default",
+              "completed": false,
+              "description": e.person,
+              "category": "Personal Availability",
+              // "location": e.location || "N/A",
+              "start":  new Date(e.start_datetime),
+              "end":  new Date(e.end_datetime),
+              "title": "Requested Fly Day",
+            })
+          });
+          this.store = build;
+          Store.setStore(this.store);
+          console.log("Build is equal to ", build);
+          renderViews(context, datepickerContext, this);
+
+          this.store = build;
+          Store.setStore(this.store);
+
+          var overlay = document.getElementById('overlay');
+          overlay.style.display = 'none';
+
+        })
+        .catch(error => console.log('error', error));
+
+    fetch(api_url + "/scheduledevent/", requestOptions)
+        .then(response => response.text())
+        .then(result => {
+          console.log("Server events");
+          let json = JSON.parse(result);
+          console.log(json);
+          json.forEach(e => {
+            build.push({
+              "id": "SE"+(e.id).toString(),
+              "category": "default",
+              "completed": false,
+              "description": 'Assigned Pilots: ' + e.assigned_pilots + ' \r\n  Available Pilots: '+ e.available_pilots + ' \r\n Unavailable Pilots: ' + e.busy_pilots,
+              "category": "Flying Schedule",
+              // "location": e.location || "N/A",
+              "start":  new Date(e.date),
+              "end":  new Date(new Date(e.date).getTime() + e.scheduled_hours * 60 * 60 * 1000),
+              "title": e.name,
+            })
+          });
+          this.store = build;
+          Store.setStore(this.store);
+          console.log("Build is equal to ", build);
+          renderViews(context, datepickerContext, this);
+
+          this.store = build;
+          Store.setStore(this.store);
+
+          var overlay = document.getElementById('overlay');
+          overlay.style.display = 'none';
+
+        })
+        .catch(error => console.log('error', error));
+
+
+
   }
 
   setStoreForTesting(store) {

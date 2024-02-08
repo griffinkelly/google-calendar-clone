@@ -52,11 +52,11 @@ const labels = locales.labels;
 */
 class Context {
   constructor () {
-    this.colorScheme = "dark";
+    this.colorScheme = "light";
     this.component = "month";
     this.sidebarState = "hide";
     this.date = new Date();
-    this.gmt = new Date().getTimezoneOffset() / 60;
+    this.gmt = new Date().getTimezoneOffset() / -60;
 
     this.dateSelected = 1;
     this.daySelected = this.date.getDate();
